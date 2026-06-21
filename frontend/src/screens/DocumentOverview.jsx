@@ -17,11 +17,13 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
     load()
   }, [docId])
 
+  const activeGroups = groups.filter(g => g.question_count > 0 || g.group_type === 'none')
+
   useEffect(() => {
-    if (groups.length === 1 && groups[0].group_type === 'none') {
-      onStartQuiz(groups[0].id)
+    if (activeGroups.length === 1 && activeGroups[0].group_type === 'none') {
+      onStartQuiz(activeGroups[0].id)
     }
-  }, [groups, onStartQuiz])
+  }, [activeGroups, onStartQuiz])
 
   const groupLabel = () => {
     if (!groups.length) return 'Groups'
@@ -39,7 +41,7 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
   )
 
   // Single group with type "none" — useEffect will navigate away; render nothing
-  if (groups.length === 1 && groups[0].group_type === 'none') return null
+  if (activeGroups.length === 1 && activeGroups[0].group_type === 'none') return null
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -59,7 +61,7 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
         </h2>
 
         <div className="flex flex-col gap-3">
-          {groups.map((group) => (
+          {activeGroups.map((group) => (
             <div key={group.id}
               className="bg-white rounded-2xl border border-gray-200 p-5 flex items-center justify-between hover:border-gray-400 transition-colors"
             >

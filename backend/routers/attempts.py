@@ -4,6 +4,7 @@ from bson import ObjectId
 from database import collections
 from models.schemas import StartAttemptRequest, SubmitAttemptRequest, AttemptOut, QuestionOut, OptionsOut, ExtractionMethod, BreakdownItem
 from services.scoring import calculate_score
+from services.llm_validator import validate_group
 
 router = APIRouter()
 
@@ -21,6 +22,11 @@ def _serialize_question_no_answer(q: dict) -> QuestionOut:
 
 @router.post("/attempts")
 async def start_attempt(body: StartAttemptRequest):
+    # Run LLM validation the first time this group is attempted (lazy, once per group)
+    group = await collections.groups.find_one({"_id": ObjectId(body.group_id)})
+    if group and not group.get("llm_validated", True):
+        await validate_group(body.group_id)
+
     questions = await collections.questions.find(
         {"group_id": ObjectId(body.group_id)}
     ).to_list(length=500)

@@ -17,9 +17,15 @@ export default function UploadScreen({ onDocumentReady }) {
     }
   }, [document, onDocumentReady])
 
+  const MAX_SIZE_MB = 50
+
   const handleFile = useCallback(async (file) => {
     if (!file || !file.name.endsWith('.pdf')) {
       setUploadError('Please upload a PDF file.')
+      return
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      setUploadError(`File is too large. Maximum size is ${MAX_SIZE_MB} MB.`)
       return
     }
     setUploadError(null)
@@ -74,6 +80,7 @@ export default function UploadScreen({ onDocumentReady }) {
               Browse file
               <input type="file" accept=".pdf" className="hidden" onChange={onInputChange} />
             </label>
+            <p className="text-gray-400 text-xs">Maximum file size: 50 MB</p>
           </>
         )}
       </div>

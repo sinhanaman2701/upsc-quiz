@@ -22,10 +22,17 @@ def _serialize_doc(doc: dict) -> DocumentOut:
     )
 
 
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+
 @router.post("/documents/upload", response_model=DocumentOut)
 async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(400, "Only PDF files are supported")
+
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "File exceeds the 50 MB limit")
+    await file.seek(0)
 
     os.makedirs(settings.upload_dir, exist_ok=True)
     safe_name = os.path.basename(file.filename)

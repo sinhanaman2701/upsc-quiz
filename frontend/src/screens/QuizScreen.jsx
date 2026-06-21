@@ -8,13 +8,19 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
   const [responses, setResponses] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     async function init() {
-      const data = await startAttempt(groupId)
-      setAttemptId(data.attempt_id)
-      setQuestions(data.questions)
-      setLoading(false)
+      try {
+        const data = await startAttempt(groupId)
+        setAttemptId(data.attempt_id)
+        setQuestions(data.questions)
+      } catch {
+        setError('Failed to load questions. This chapter may have no questions yet.')
+      } finally {
+        setLoading(false)
+      }
     }
     init()
   }, [groupId])
@@ -29,19 +35,31 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    const responseList = questions
-      .filter(q => responses[q.id])
-      .map(q => ({
-        question_id: q.id,
-        selected: responses[q.id],
-      }))
-    const result = await submitAttempt(attemptId, responseList)
-    onComplete(attemptId)
+    try {
+      const responseList = questions
+        .filter(q => responses[q.id])
+        .map(q => ({
+          question_id: q.id,
+          selected: responses[q.id],
+        }))
+      await submitAttempt(attemptId, responseList)
+      onComplete(attemptId)
+    } catch {
+      setError('Failed to submit. Please try again.')
+      setSubmitting(false)
+    }
   }
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <p className="text-red-500 text-sm">{error}</p>
+      <button onClick={onBack} className="text-gray-600 text-sm underline">Go back</button>
     </div>
   )
 
