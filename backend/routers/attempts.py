@@ -26,6 +26,9 @@ async def start_attempt(body: StartAttemptRequest):
     ).to_list(length=500)
     questions = sorted(questions, key=lambda q: q["order_index"])
 
+    if not questions:
+        raise HTTPException(422, "No questions available for this group")
+
     attempt_doc = {
         "group_id": ObjectId(body.group_id),
         "document_id": questions[0]["document_id"] if questions else None,
@@ -48,6 +51,9 @@ async def submit_attempt(attempt_id: str, body: SubmitAttemptRequest):
     attempt = await collections.attempts.find_one({"_id": ObjectId(attempt_id)})
     if not attempt:
         raise HTTPException(404, "Attempt not found")
+
+    if attempt.get("submitted_at") is not None:
+        raise HTTPException(409, "Attempt already submitted")
 
     question_ids = [ObjectId(r.question_id) for r in body.responses]
     questions = await collections.questions.find(
@@ -85,6 +91,9 @@ async def get_attempt(attempt_id: str):
     attempt = await collections.attempts.find_one({"_id": ObjectId(attempt_id)})
     if not attempt:
         raise HTTPException(404, "Attempt not found")
+
+    if attempt.get("submitted_at") is None:
+        raise HTTPException(422, "Attempt not yet submitted")
 
     question_ids = [r["question_id"] for r in attempt.get("responses", [])]
     questions = await collections.questions.find(

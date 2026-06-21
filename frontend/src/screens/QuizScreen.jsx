@@ -29,10 +29,12 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    const responseList = questions.map(q => ({
-      question_id: q.id,
-      selected: responses[q.id] || 'a',
-    }))
+    const responseList = questions
+      .filter(q => responses[q.id])
+      .map(q => ({
+        question_id: q.id,
+        selected: responses[q.id],
+      }))
     const result = await submitAttempt(attemptId, responseList)
     onComplete(attemptId)
   }

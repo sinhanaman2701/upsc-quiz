@@ -17,6 +17,12 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
     load()
   }, [docId])
 
+  useEffect(() => {
+    if (groups.length === 1 && groups[0].group_type === 'none') {
+      onStartQuiz(groups[0].id)
+    }
+  }, [groups, onStartQuiz])
+
   const groupLabel = () => {
     if (!groups.length) return 'Groups'
     const types = [...new Set(groups.map(g => g.group_type))]
@@ -32,11 +38,8 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
     </div>
   )
 
-  // Single group with type "none" — skip selection, go straight to quiz
-  if (groups.length === 1 && groups[0].group_type === 'none') {
-    onStartQuiz(groups[0].id)
-    return null
-  }
+  // Single group with type "none" — useEffect will navigate away; render nothing
+  if (groups.length === 1 && groups[0].group_type === 'none') return null
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

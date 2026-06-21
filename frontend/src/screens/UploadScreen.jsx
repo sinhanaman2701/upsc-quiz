@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { uploadDocument } from '../api/documents'
 import { useDocumentPolling } from '../hooks/useDocumentPolling'
 
@@ -11,9 +11,11 @@ export default function UploadScreen({ onDocumentReady }) {
   const { document, isPolling, error: pollError } = useDocumentPolling(docId)
 
   // Navigate once parsing is done
-  if (document && document.status === 'ready') {
-    onDocumentReady(document.id)
-  }
+  useEffect(() => {
+    if (document && document.status === 'ready') {
+      onDocumentReady(document.id)
+    }
+  }, [document, onDocumentReady])
 
   const handleFile = useCallback(async (file) => {
     if (!file || !file.name.endsWith('.pdf')) {

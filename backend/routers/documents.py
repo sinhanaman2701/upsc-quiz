@@ -28,7 +28,8 @@ async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = 
         raise HTTPException(400, "Only PDF files are supported")
 
     os.makedirs(settings.upload_dir, exist_ok=True)
-    save_path = os.path.join(settings.upload_dir, f"{ObjectId()}_{file.filename}")
+    safe_name = os.path.basename(file.filename)
+    save_path = os.path.join(settings.upload_dir, f"{ObjectId()}_{safe_name}")
 
     with open(save_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
