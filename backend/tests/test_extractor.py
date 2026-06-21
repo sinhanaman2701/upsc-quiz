@@ -2,7 +2,7 @@ import pytest
 import os
 from services.parser.extractor import extract_text
 
-SAMPLE_PDF = "/Users/namansinha/Downloads/Anisha/POLITY_MCQs_with_Solutions_PART_1.pdf"
+SAMPLE_PDF = "/Users/namansinha/Downloads/POLITY_MCQs_with_Solutions_PART_1.pdf"
 
 def test_extract_returns_list_of_tuples():
     result = extract_text(SAMPLE_PDF)
