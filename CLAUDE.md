@@ -81,7 +81,7 @@ ssh -i ~/Downloads/llm-router-chatbot-key.pem ubuntu@<new-ip>
 
 # 4. Start containers
 cd ~/upsc-quiz
-sudo docker compose -f docker-compose.ec2.yml up -d
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 up -d
 
 # 5. Verify
 curl http://localhost/health
@@ -103,27 +103,27 @@ git push origin main
 ssh -i ~/Downloads/llm-router-chatbot-key.pem ubuntu@<ip>
 cd ~/upsc-quiz
 git pull origin main
-sudo docker compose -f docker-compose.ec2.yml build
-sudo docker compose -f docker-compose.ec2.yml up -d
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 build
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 up -d
 ```
 
 Only rebuild the service that changed to save time:
 
 ```bash
 # Backend change only
-sudo docker compose -f docker-compose.ec2.yml build upsc-backend
-sudo docker compose -f docker-compose.ec2.yml up -d --no-deps upsc-backend
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 build upsc-backend
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 up -d --no-deps upsc-backend
 
 # Frontend change only
-sudo docker compose -f docker-compose.ec2.yml build upsc-frontend
-sudo docker compose -f docker-compose.ec2.yml up -d --no-deps upsc-frontend
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 build upsc-frontend
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 up -d --no-deps upsc-frontend
 ```
 
 ## EC2 Operations
 
 ```bash
 # Container status
-sudo docker compose -f docker-compose.ec2.yml ps
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 ps
 
 # Logs
 sudo docker logs upsc-quiz-upsc-backend-1 --tail=50 -f
@@ -133,10 +133,10 @@ sudo docker logs upsc-quiz-upsc-frontend-1 --tail=50 -f
 curl http://localhost/health
 
 # Restart everything
-sudo docker compose -f docker-compose.ec2.yml restart
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 restart
 
 # Stop everything
-sudo docker compose -f docker-compose.ec2.yml down
+sudo docker compose -f docker-compose.ec2.yml --env-file .env.ec2 down
 ```
 
 ## Docker Architecture on EC2
