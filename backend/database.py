@@ -36,5 +36,9 @@ class Collections:
     def attempts(self):
         return get_database()["attempts"]
 
+    @property
+    def logs(self):
+        return get_database()["logs"]
+
 
 collections = Collections()

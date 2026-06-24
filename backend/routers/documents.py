@@ -7,6 +7,7 @@ from bson.errors import InvalidId
 from database import collections
 from models.schemas import DocumentOut, DocumentStatus
 from services.parser.pipeline import run_pipeline
+from services.upload_logger import log as upload_log
 from config import settings
 
 router = APIRouter()
@@ -57,8 +58,12 @@ async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = 
     }
     result = await collections.documents.insert_one(doc)
     doc["_id"] = result.inserted_id
+    doc_id = str(result.inserted_id)
 
-    background_tasks.add_task(run_pipeline, save_path, str(result.inserted_id))
+    await upload_log(doc_id, "upload_received", f"PDF received: {file.filename}",
+                     data={"filename": file.filename, "size_bytes": len(contents)})
+
+    background_tasks.add_task(run_pipeline, save_path, doc_id)
     return _serialize_doc(doc)
 
 
