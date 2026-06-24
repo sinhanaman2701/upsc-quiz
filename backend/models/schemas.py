@@ -101,6 +101,7 @@ class SupportTicketOut(BaseModel):
     image_base64: Optional[str] = None
     image_mime: Optional[str] = None
     resolved: bool
+    comment: Optional[str] = None
     created_at: datetime
 
     @field_validator("id", mode="before")

@@ -6,7 +6,7 @@ from PIL import Image
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Body, File, Form, HTTPException, UploadFile
 from models.schemas import SupportTicketOut
 from pymongo import ReturnDocument
 
@@ -67,7 +67,7 @@ async def list_support_tickets():
 
 
 @router.patch("/support/{ticket_id}/resolve", response_model=SupportTicketOut, response_model_by_alias=False)
-async def toggle_support_ticket_resolution(ticket_id: str):
+async def toggle_support_ticket_resolution(ticket_id: str, comment: str | None = Body(default=None, embed=True)):
     try:
         oid = ObjectId(ticket_id)
     except InvalidId:
@@ -76,13 +76,36 @@ async def toggle_support_ticket_resolution(ticket_id: str):
     if not ticket:
         raise HTTPException(404, "Support ticket not found")
 
+    update: dict = {"resolved": not ticket.get("resolved", False)}
+    if comment is not None:
+        update["comment"] = comment.strip()
+
     updated_ticket = await collections.support.find_one_and_update(
         {"_id": oid},
-        {"$set": {"resolved": not ticket.get("resolved", False)}},
+        {"$set": update},
         return_document=ReturnDocument.AFTER,
     )
 
     if not updated_ticket:
         raise HTTPException(404, "Support ticket not found")
 
+    return updated_ticket
+
+
+@router.patch("/support/{ticket_id}/comment", response_model=SupportTicketOut, response_model_by_alias=False)
+async def update_support_ticket_comment(ticket_id: str, comment: str = Body(..., embed=True)):
+    try:
+        oid = ObjectId(ticket_id)
+    except InvalidId:
+        raise HTTPException(400, "Invalid ticket ID")
+    comment = comment.strip()
+    if not comment:
+        raise HTTPException(422, "Comment cannot be empty")
+    updated_ticket = await collections.support.find_one_and_update(
+        {"_id": oid},
+        {"$set": {"comment": comment}},
+        return_document=ReturnDocument.AFTER,
+    )
+    if not updated_ticket:
+        raise HTTPException(404, "Support ticket not found")
     return updated_ticket
