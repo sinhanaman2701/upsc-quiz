@@ -32,6 +32,8 @@ async def get_groups(doc_id: str):
         oid = ObjectId(doc_id)
     except InvalidId:
         raise HTTPException(400, "Invalid document ID")
+    if not await collections.documents.find_one({"_id": oid}):
+        raise HTTPException(404, "Document not found")
     groups = await collections.groups.find(
         {"document_id": oid}
     ).to_list(length=100)
@@ -43,6 +45,8 @@ async def get_questions(group_id: str):
         oid = ObjectId(group_id)
     except InvalidId:
         raise HTTPException(400, "Invalid group ID")
+    if not await collections.groups.find_one({"_id": oid}):
+        raise HTTPException(404, "Group not found")
     questions = await collections.questions.find(
         {"group_id": oid}
     ).to_list(length=500)
