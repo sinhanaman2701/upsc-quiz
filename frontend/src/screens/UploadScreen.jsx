@@ -21,7 +21,7 @@ export default function UploadScreen({ onDocumentReady }) {
   const MAX_SIZE_MB = 50
 
   const handleFile = useCallback(async (file) => {
-    if (!file || !file.name.endsWith('.pdf')) {
+    if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
       setUploadError('Please upload a PDF file.')
       return
     }

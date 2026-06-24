@@ -27,7 +27,7 @@ MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 
 @router.post("/documents/upload", response_model=DocumentOut)
 async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
-    if not file.filename.endswith(".pdf"):
+    if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Only PDF files are supported")
 
     contents = await file.read()
