@@ -156,13 +156,25 @@ MongoDB data is persisted in a Docker volume (`upsc-quiz_mongodb_data`).
 
 | Variable | Value on EC2 | Notes |
 |---|---|---|
-| `MONGODB_URI` | `mongodb://upsc-mongodb:27017` | Points to the MongoDB container |
+| `MONGODB_URI` | `mongodb+srv://upsc-app:...@upsc-quiz-cluster.g3gjjao.mongodb.net/upsc_quiz` | MongoDB Atlas — see credentials below |
 | `DB_NAME` | `upsc_quiz` | |
 | `UPLOAD_DIR` | `/tmp/upsc_uploads` | Temporary; files deleted after parsing |
 | `CORS_ORIGINS` | `*` | Open on EC2; restrict to a domain if needed |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | No Ollama on EC2 — validation skipped gracefully |
 | `OLLAMA_MODEL` | `gpt-oss:120b-cloud` | |
 | `OLLAMA_API_KEY` | (empty) | |
+
+## MongoDB Atlas
+
+- **Project:** upsc-quiz (id: 6a37eb93afc546def6b872e2)
+- **Cluster:** upsc-quiz-cluster
+- **Connection string:** `mongodb+srv://upsc-quiz-cluster.g3gjjao.mongodb.net`
+- **DB user:** `upsc-app`
+- **Database:** `upsc_quiz`
+- **Atlas API profile:** `upsc` (keys stored in `~/.config/atlascli/config.toml`)
+- **IP whitelist:** dev machine + 13.206.94.228 (EC2)
+
+> The `support` collection is NOT wiped on PDF upload — only `documents`, `groups`, `questions`, `attempts` are wiped.
 
 ### Frontend (baked in at Docker build time)
 

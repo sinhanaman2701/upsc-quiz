@@ -1,17 +1,9 @@
 services:
-  upsc-mongodb:
-    image: mongo:7
-    restart: unless-stopped
-    volumes:
-      - mongodb_data:/data/db
-
   upsc-backend:
     build: ./backend
     restart: unless-stopped
-    depends_on:
-      - upsc-mongodb
     environment:
-      MONGODB_URI: mongodb://upsc-mongodb:27017
+      MONGODB_URI: ${MONGODB_URI}
       DB_NAME: upsc_quiz
       UPLOAD_DIR: /tmp/upsc_uploads
       CORS_ORIGINS: "*"
@@ -29,6 +21,3 @@ services:
       - "80:80"
     depends_on:
       - upsc-backend
-
-volumes:
-  mongodb_data:
