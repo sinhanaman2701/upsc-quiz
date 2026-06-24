@@ -6,13 +6,19 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
   const [document, setDocument] = useState(null)
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     async function load() {
-      const [doc, grps] = await Promise.all([getDocument(docId), getGroups(docId)])
-      setDocument(doc)
-      setGroups(grps)
-      setLoading(false)
+      try {
+        const [doc, grps] = await Promise.all([getDocument(docId), getGroups(docId)])
+        setDocument(doc)
+        setGroups(grps)
+      } catch {
+        setError('Failed to load document.')
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [docId])
@@ -37,6 +43,13 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <p className="text-red-500 text-sm">{error}</p>
+      <button onClick={onBack} className="text-gray-600 text-sm underline">Go back</button>
     </div>
   )
 

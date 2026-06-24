@@ -3,6 +3,7 @@ import shutil
 from datetime import datetime
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from bson import ObjectId
+from bson.errors import InvalidId
 from database import collections
 from models.schemas import DocumentOut, DocumentStatus
 from services.parser.pipeline import run_pipeline
@@ -34,6 +35,12 @@ async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = 
         raise HTTPException(413, "File exceeds the 50 MB limit")
     await file.seek(0)
 
+    # Wipe all existing data so each upload is a clean slate
+    await collections.attempts.delete_many({})
+    await collections.questions.delete_many({})
+    await collections.groups.delete_many({})
+    await collections.documents.delete_many({})
+
     os.makedirs(settings.upload_dir, exist_ok=True)
     safe_name = os.path.basename(file.filename)
     save_path = os.path.join(settings.upload_dir, f"{ObjectId()}_{safe_name}")
@@ -63,7 +70,11 @@ async def list_documents():
 
 @router.get("/documents/{doc_id}", response_model=DocumentOut)
 async def get_document(doc_id: str):
-    doc = await collections.documents.find_one({"_id": ObjectId(doc_id)})
+    try:
+        oid = ObjectId(doc_id)
+    except InvalidId:
+        raise HTTPException(400, "Invalid document ID")
+    doc = await collections.documents.find_one({"_id": oid})
     if not doc:
         raise HTTPException(404, "Document not found")
     return _serialize_doc(doc)

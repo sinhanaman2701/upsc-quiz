@@ -5,12 +5,13 @@ import { useDocumentPolling } from '../hooks/useDocumentPolling'
 export default function UploadScreen({ onDocumentReady }) {
   const [docId, setDocId] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const [uploadError, setUploadError] = useState(null)
+  const [inputKey, setInputKey] = useState(0)
 
   const { document, isPolling, error: pollError } = useDocumentPolling(docId)
 
-  // Navigate once parsing is done
   useEffect(() => {
     if (document && document.status === 'ready') {
       onDocumentReady(document.id)
@@ -30,11 +31,13 @@ export default function UploadScreen({ onDocumentReady }) {
     }
     setUploadError(null)
     setUploading(true)
+    setUploadProgress(0)
     try {
-      const doc = await uploadDocument(file)
+      const doc = await uploadDocument(file, setUploadProgress)
       setDocId(doc.id)
     } catch {
       setUploadError('Upload failed. Please try again.')
+      setInputKey(k => k + 1)
     } finally {
       setUploading(false)
     }
@@ -63,10 +66,24 @@ export default function UploadScreen({ onDocumentReady }) {
           ${dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white'}`}
       >
         {isProcessing ? (
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-600 text-sm">
-              {uploading ? 'Uploading...' : 'Parsing PDF, extracting questions...'}
+          <div className="w-full flex flex-col items-center gap-4">
+            <p className="text-gray-700 text-sm font-medium">
+              {uploading ? `Uploading… ${uploadProgress}%` : 'Extracting questions from PDF…'}
+            </p>
+
+            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+              {uploading ? (
+                <div
+                  className="h-2.5 rounded-full bg-blue-500 transition-all duration-200"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              ) : (
+                <div className="h-2.5 rounded-full bg-blue-500 animate-[indeterminate_1.4s_ease-in-out_infinite]" />
+              )}
+            </div>
+
+            <p className="text-gray-400 text-xs">
+              {uploading ? 'Please wait while the file is being sent' : 'This may take a moment depending on PDF size'}
             </p>
           </div>
         ) : (
@@ -78,7 +95,7 @@ export default function UploadScreen({ onDocumentReady }) {
             <p className="text-gray-600">Drag and drop a PDF here, or</p>
             <label className="cursor-pointer bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-700 transition-colors">
               Browse file
-              <input type="file" accept=".pdf" className="hidden" onChange={onInputChange} />
+              <input key={inputKey} type="file" accept=".pdf" className="hidden" onChange={onInputChange} />
             </label>
             <p className="text-gray-400 text-xs">Maximum file size: 50 MB</p>
           </>

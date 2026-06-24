@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
+from bson.errors import InvalidId
 from database import collections
 from models.schemas import StartAttemptRequest, SubmitAttemptRequest, AttemptOut, QuestionOut, OptionsOut, ExtractionMethod, BreakdownItem
 from services.scoring import calculate_score
@@ -22,13 +23,17 @@ def _serialize_question_no_answer(q: dict) -> QuestionOut:
 
 @router.post("/attempts")
 async def start_attempt(body: StartAttemptRequest):
+    try:
+        group_oid = ObjectId(body.group_id)
+    except InvalidId:
+        raise HTTPException(400, "Invalid group ID")
     # Run LLM validation the first time this group is attempted (lazy, once per group)
-    group = await collections.groups.find_one({"_id": ObjectId(body.group_id)})
+    group = await collections.groups.find_one({"_id": group_oid})
     if group and not group.get("llm_validated", True):
         await validate_group(body.group_id)
 
     questions = await collections.questions.find(
-        {"group_id": ObjectId(body.group_id)}
+        {"group_id": group_oid}
     ).to_list(length=500)
     questions = sorted(questions, key=lambda q: q["order_index"])
 
@@ -54,14 +59,23 @@ async def start_attempt(body: StartAttemptRequest):
 
 @router.post("/attempts/{attempt_id}/submit", response_model=AttemptOut)
 async def submit_attempt(attempt_id: str, body: SubmitAttemptRequest):
-    attempt = await collections.attempts.find_one({"_id": ObjectId(attempt_id)})
+    if not body.responses:
+        raise HTTPException(422, "No responses provided")
+    try:
+        attempt_oid = ObjectId(attempt_id)
+    except InvalidId:
+        raise HTTPException(400, "Invalid attempt ID")
+    attempt = await collections.attempts.find_one({"_id": attempt_oid})
     if not attempt:
         raise HTTPException(404, "Attempt not found")
 
     if attempt.get("submitted_at") is not None:
         raise HTTPException(409, "Attempt already submitted")
 
-    question_ids = [ObjectId(r.question_id) for r in body.responses]
+    try:
+        question_ids = [ObjectId(r.question_id) for r in body.responses]
+    except InvalidId:
+        raise HTTPException(400, "Invalid question ID in responses")
     questions = await collections.questions.find(
         {"_id": {"$in": question_ids}}
     ).to_list(length=500)
@@ -71,7 +85,7 @@ async def submit_attempt(attempt_id: str, body: SubmitAttemptRequest):
     score, breakdown = calculate_score(responses, questions_by_id)
 
     await collections.attempts.update_one(
-        {"_id": ObjectId(attempt_id)},
+        {"_id": attempt_oid},
         {"$set": {
             "submitted_at": datetime.utcnow(),
             "score": score,
@@ -94,7 +108,11 @@ async def submit_attempt(attempt_id: str, body: SubmitAttemptRequest):
 
 @router.get("/attempts/{attempt_id}", response_model=AttemptOut)
 async def get_attempt(attempt_id: str):
-    attempt = await collections.attempts.find_one({"_id": ObjectId(attempt_id)})
+    try:
+        attempt_oid = ObjectId(attempt_id)
+    except InvalidId:
+        raise HTTPException(400, "Invalid attempt ID")
+    attempt = await collections.attempts.find_one({"_id": attempt_oid})
     if not attempt:
         raise HTTPException(404, "Attempt not found")
 

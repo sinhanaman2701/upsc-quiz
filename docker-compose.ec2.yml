@@ -1,0 +1,34 @@
+services:
+  upsc-mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+
+  upsc-backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - upsc-mongodb
+    environment:
+      MONGODB_URI: mongodb://upsc-mongodb:27017
+      DB_NAME: upsc_quiz
+      UPLOAD_DIR: /tmp/upsc_uploads
+      CORS_ORIGINS: "*"
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gpt-oss:120b-cloud}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
+
+  upsc-frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - upsc-backend
+
+volumes:
+  mongodb_data:

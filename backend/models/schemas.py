@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+from bson import ObjectId
 
 
 class DocumentStatus(str, Enum):
@@ -90,3 +91,21 @@ class AttemptOut(BaseModel):
     score: int
     total: int
     breakdown: list[BreakdownItem]
+
+
+class SupportTicketOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str = Field(alias="_id")
+    message: str
+    image_base64: Optional[str] = None
+    image_mime: Optional[str] = None
+    resolved: bool
+    created_at: datetime
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def stringify_object_id(cls, value):
+        if isinstance(value, ObjectId):
+            return str(value)
+        return value

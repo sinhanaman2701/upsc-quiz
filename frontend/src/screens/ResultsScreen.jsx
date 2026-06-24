@@ -3,18 +3,26 @@ import { getAttempt } from '../api/attempts'
 
 export default function ResultsScreen({ attemptId, onRetry, onPickGroup }) {
   const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    getAttempt(attemptId).then(setResult)
+    getAttempt(attemptId).then(setResult).catch(() => setError('Failed to load results.'))
   }, [attemptId])
 
-  if (!result) return (
+  if (!result && !error) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
-  const pct = Math.round((result.score / result.total) * 100)
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <p className="text-red-500 text-sm">{error}</p>
+      <button onClick={onPickGroup} className="text-gray-600 text-sm underline">Go back</button>
+    </div>
+  )
+
+  const pct = result.total > 0 ? Math.round((result.score / result.total) * 100) : 0
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

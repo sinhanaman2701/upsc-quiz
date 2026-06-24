@@ -21,6 +21,10 @@ class Collections:
         return get_database()["documents"]
 
     @property
+    def support(self):
+        return get_database()["support"]
+
+    @property
     def groups(self):
         return get_database()["groups"]
 

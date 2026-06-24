@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from bson import ObjectId
+from bson.errors import InvalidId
 from database import collections
 from models.schemas import GroupOut, QuestionOut, OptionsOut, GroupType, ExtractionMethod
 
@@ -27,14 +28,22 @@ def _serialize_question(q: dict) -> QuestionOut:
 
 @router.get("/documents/{doc_id}/groups", response_model=list[GroupOut])
 async def get_groups(doc_id: str):
+    try:
+        oid = ObjectId(doc_id)
+    except InvalidId:
+        raise HTTPException(400, "Invalid document ID")
     groups = await collections.groups.find(
-        {"document_id": ObjectId(doc_id)}
+        {"document_id": oid}
     ).to_list(length=100)
     return [_serialize_group(g) for g in sorted(groups, key=lambda g: g["order_index"])]
 
 @router.get("/groups/{group_id}/questions", response_model=list[QuestionOut])
 async def get_questions(group_id: str):
+    try:
+        oid = ObjectId(group_id)
+    except InvalidId:
+        raise HTTPException(400, "Invalid group ID")
     questions = await collections.questions.find(
-        {"group_id": ObjectId(group_id)}
+        {"group_id": oid}
     ).to_list(length=500)
     return [_serialize_question(q) for q in sorted(questions, key=lambda q: q["order_index"])]
