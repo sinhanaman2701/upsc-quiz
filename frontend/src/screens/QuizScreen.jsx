@@ -6,6 +6,7 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
   const [questions, setQuestions] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [responses, setResponses] = useState({})
+  const [skipped, setSkipped] = useState(new Set())
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -28,9 +29,21 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
   const currentQuestion = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
   const selectedOption = responses[currentQuestion?.id]
+  const answeredCount = Object.keys(responses).length
+  const skippedCount = [...skipped].filter(id => !responses[id]).length
 
   const handleSelect = (option) => {
     setResponses(prev => ({ ...prev, [currentQuestion.id]: option }))
+    setSkipped(prev => {
+      const next = new Set(prev)
+      next.delete(currentQuestion.id)
+      return next
+    })
+  }
+
+  const handleSkip = () => {
+    setSkipped(prev => new Set([...prev, currentQuestion.id]))
+    setCurrentIndex(i => i + 1)
   }
 
   const handleSubmit = async () => {
@@ -69,8 +82,14 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => {
-              const answered = Object.keys(responses).length
-              if (answered === 0 || window.confirm(`You've answered ${answered} of ${questions.length} questions. Exit and lose your progress?`)) {
+              if (answeredCount === 0 && skippedCount === 0) {
+                onBack()
+                return
+              }
+              const parts = []
+              if (answeredCount > 0) parts.push(`answered ${answeredCount}`)
+              if (skippedCount > 0) parts.push(`skipped ${skippedCount}`)
+              if (window.confirm(`You've ${parts.join(', ')} of ${questions.length} questions. Exit and lose your progress?`)) {
                 onBack()
               }
             }}
@@ -81,7 +100,7 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
               Question {currentIndex + 1} of {questions.length}
             </span>
             <span className="text-xs text-gray-400">
-              {Object.keys(responses).length} answered
+              {answeredCount} answered{skippedCount > 0 ? ` · ${skippedCount} skipped` : ''}
             </span>
           </div>
         </div>
@@ -116,7 +135,7 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
           ))}
         </div>
 
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <button
             onClick={() => setCurrentIndex(i => i - 1)}
             disabled={currentIndex === 0}
@@ -125,23 +144,34 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
             Previous
           </button>
 
-          {isLast ? (
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !selectedOption}
-              className="px-6 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium disabled:opacity-40 hover:bg-gray-700 transition-colors"
-            >
-              {submitting ? 'Submitting...' : 'Submit Quiz'}
-            </button>
-          ) : (
-            <button
-              onClick={() => setCurrentIndex(i => i + 1)}
-              disabled={!selectedOption}
-              className="px-5 py-2.5 rounded-xl bg-gray-900 text-white text-sm disabled:opacity-40 hover:bg-gray-700 transition-colors"
-            >
-              Next
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {!isLast && (
+              <button
+                onClick={handleSkip}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+              >
+                Skip
+              </button>
+            )}
+
+            {isLast ? (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || answeredCount === 0}
+                className="px-6 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium disabled:opacity-40 hover:bg-gray-700 transition-colors"
+              >
+                {submitting ? 'Submitting...' : 'Submit Quiz'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setCurrentIndex(i => i + 1)}
+                disabled={!selectedOption}
+                className="px-5 py-2.5 rounded-xl bg-gray-900 text-white text-sm disabled:opacity-40 hover:bg-gray-700 transition-colors"
+              >
+                Next
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
