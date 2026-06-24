@@ -31,6 +31,10 @@ async def create_support_ticket(
     message: str = Form(...),
     image: UploadFile | None = File(default=None),
 ):
+    message = message.strip()
+    if not message:
+        raise HTTPException(422, "Message cannot be empty")
+
     image_base64 = None
     image_mime = None
 

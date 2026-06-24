@@ -67,10 +67,23 @@ export default function QuizScreen({ groupId, onComplete, onBack }) {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <button onClick={onBack} className="text-gray-500 text-sm hover:text-gray-700">← Exit</button>
-          <span className="text-sm text-gray-500">
-            Question {currentIndex + 1} of {questions.length}
-          </span>
+          <button
+            onClick={() => {
+              const answered = Object.keys(responses).length
+              if (answered === 0 || window.confirm(`You've answered ${answered} of ${questions.length} questions. Exit and lose your progress?`)) {
+                onBack()
+              }
+            }}
+            className="text-gray-500 text-sm hover:text-gray-700"
+          >← Exit</button>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-sm text-gray-500">
+              Question {currentIndex + 1} of {questions.length}
+            </span>
+            <span className="text-xs text-gray-400">
+              {Object.keys(responses).length} answered
+            </span>
+          </div>
         </div>
 
         {/* Progress bar */}

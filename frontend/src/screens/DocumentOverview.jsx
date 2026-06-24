@@ -60,7 +60,7 @@ export default function DocumentOverview({ docId, onStartQuiz, onBack }) {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto">
         <button onClick={onBack} className="text-gray-500 text-sm mb-6 hover:text-gray-700 flex items-center gap-1">
-          ← Back
+          ← Upload new PDF
         </button>
 
         <h1 className="text-2xl font-semibold text-gray-900 mb-1">{document.filename}</h1>
