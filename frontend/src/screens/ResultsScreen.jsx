@@ -54,7 +54,7 @@ export default function ResultsScreen({ attemptId, onRetry, onPickGroup }) {
                 ))}
               </div>
 
-              {!item.is_correct && item.explanation && (
+              {item.explanation && (
                 <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 leading-relaxed">
                   <span className="font-medium text-gray-700">Explanation: </span>
                   {item.explanation}
