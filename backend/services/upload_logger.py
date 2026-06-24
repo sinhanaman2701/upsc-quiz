@@ -12,5 +12,5 @@ async def log(document_id: str, event: str, message: str, level: str = "info", d
         "level": level,
         "message": message,
         "data": data or {},
-        "timestamp": datetime.now(_IST),
+        "timestamp": datetime.now(_IST).replace(tzinfo=None),
     })
